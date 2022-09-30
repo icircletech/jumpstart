@@ -1,0 +1,10 @@
+---
+mysql_root_password: "P@ssw0rd<-CHANGE-THIS!"
+wp_mysql_db: "wp_database_name"
+wp_mysql_user: "wp_database_user"
+wp_mysql_password: "wp_database_P@ssw0rd<-CHANGE-THIS!"
+app_user: "apache"
+http_host: "lamp.example.com"
+http_conf: "lamp.example.com.conf"
+http_port: "80"
+disable_default: true
