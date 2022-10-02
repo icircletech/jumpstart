@@ -12,23 +12,52 @@
 - name: Update default Apache site
   become: yes
   lineinfile: 
-    dest=/etc/apache2/sites-enabled/000-default.conf 
-    regexp="(.)+DocumentRoot /var/www/html"
-    line="DocumentRoot /var/www/wordpress"
+    dest:
+      "/etc/apache2/sites-enabled/{{ http_conf }}"
+    regexp:
+      "(.)+DocumentRoot /var/www/html"
+    line:
+      "DocumentRoot /var/www/{{ http_host }}"
+
   notify:
     - restart apache
 
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "/var/www/{{ http_host }}"
+    state: directory
+    mode: '0755'
+
+#- name: Move Wordpress Files into http_host
+ # command: "mv /var/www/wordpress/* /var/www/{{ http_host }}/ creates=/var/www/{{ http_host }}/"
+  #command: "mv /var/www/wordpress/* /var/www/{{ http_host }}"
+ # become: yes
+
+# Synchronize two directories on one remote host.
+- synchronize:
+    src: /var/www/wordpress/
+    dest: /var/www/{{ http_host }}
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Recursively remove directory
+  file:
+    path: "/var/www/wordpress"
+    state: absent
+
 - name: Copy sample config file
-  command: mv /var/www/wordpress/wp-config-sample.php /var/www/wordpress/wp-config.php creates=/var/www/wordpress/wp-config.php
+  command: "cp /var/www/{{ http_host }}/wp-config-sample.php /var/www/{{ http_host }}/wp-config.php creates=/var/www/{{ http_host }}/wp-config.php"
   become: yes
 
 - name: Update WordPress config file
   lineinfile:
-    dest=/var/www/wordpress/wp-config.php
-    regexp="{{ item.regexp }}"
-    line="{{ item.line }}"
+    dest:
+      "/var/www/{{ http_host }}/wp-config.php"
+    regexp:
+      "{{ item.regexp }}"
+    line:
+      "{{ item.line }}"
   with_items:
-    - {'regexp': "define\\('DB_NAME', '(.)+'\\);", 'line': "define('DB_NAME', '{{wp_mysql_db}}');"}        
-    - {'regexp': "define\\('DB_USER', '(.)+'\\);", 'line': "define('DB_USER', '{{wp_mysql_user}}');"}        
-    - {'regexp': "define\\('DB_PASSWORD', '(.)+'\\);", 'line': "define('DB_PASSWORD', '{{wp_mysql_password}}');"}
+    - {'regexp': "define\\( 'DB_NAME', '(.)+' \\);", 'line': "define( 'DB_NAME', '{{wp_mysql_db}}' );"}
+    - {'regexp': "define\\( 'DB_USER', '(.)+' \\);", 'line': "define( 'DB_USER', '{{wp_mysql_user}}' );"}
+    - {'regexp': "define\\( 'DB_PASSWORD', '(.)+' \\);", 'line': "define( 'DB_PASSWORD', '{{wp_mysql_password}}' );"}
   become: yes
