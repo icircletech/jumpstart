@@ -15,12 +15,27 @@
     state: started
   become: true
 
+# Drops a Config File for future use of Root
+- name: Copy a new Config file into place for idopotent use of root
+  template:
+    src:  '/home/jeff/LAMP_WP_playbook/roles/mariadb/templates/my.cnf.j2'
+    dest: '/root/.my.cnf'
+
  # MariaDB Configuration
 - name: Sets the root password
   mysql_user:
+    #check_implicit_admin: yes
+    config_file: '/root/.my.cnf'
     name: root
     password: "{{ mysql_root_password }}"
     login_unix_socket: /var/run/mysqld/mysqld.sock
+#- name: Secures the MySQL root user
+#  mysql_user: user="root" password="{{ mysql_root_password }}" login_password="" login_user=root
+#  with_items:
+#    - 127.0.0.1
+#    - localhost
+#    - ::1
+#    - ""
 
 - name: Removes all anonymous user accounts
   mysql_user:

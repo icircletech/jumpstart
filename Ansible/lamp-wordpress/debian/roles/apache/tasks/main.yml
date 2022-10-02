@@ -27,18 +27,13 @@
   shell: /usr/sbin/a2dissite 000-default.conf
   when: disable_default
   notify: Reload Apache
+
 # UFW Configuration
 - name: "UFW - Allow HTTP on port {{ http_port }}"
   ufw:
     rule: allow
     port: "{{ http_port }}"
     proto: tcp
-
-  # PHP Info Page
-- name: Sets Up PHP Info Page
-  template:
-    src: "files/info.php.j2"
-    dest: "/var/www/{{ http_host }}/info.php"
 
 - name: Reload Apache
   service:
