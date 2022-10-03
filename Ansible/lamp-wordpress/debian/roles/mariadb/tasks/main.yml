@@ -1,6 +1,10 @@
 ---
 - name: Install prerequisites
-  apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+  apt:
+    name: "{{ item }}"
+    update_cache: "yes"
+    state: "latest"
+    force_apt_get: "yes"
   loop: [ 'aptitude' ]
 
  #Install MariaDB server
@@ -11,55 +15,53 @@
 # Start MariaDB Service
 - name: Start MariaDB service
   service:
-    name: mariadb
-    state: started
+    name: "mariadb"
+    state: "started"
   become: true
 
 # Drops a Config File for future use of Root
-- name: Copy a new Config file into place for idopotent use of root
-  template:
-    src:  '/home/jeff/LAMP_WP_playbook/roles/mariadb/templates/my.cnf.j2'
-    dest: '/root/.my.cnf'
+#- name: Copy a new Config file into place for idopotent use of root
+#  template:
+#    src:  '/home/jeff/LAMP_WP_playbook/roles/mariadb/templates/my.cnf.j2'
+#    dest: '/root/.my.cnf'
 
- # MariaDB Configuration
-- name: Sets the root password
-  mysql_user:
-    #check_implicit_admin: yes
-    config_file: '/root/.my.cnf'
-    name: root
-    password: "{{ mysql_root_password }}"
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-#- name: Secures the MySQL root user
-#  mysql_user: user="root" password="{{ mysql_root_password }}" login_password="" login_user=root
-#  with_items:
-#    - 127.0.0.1
-#    - localhost
-#    - ::1
-#    - ""
+#- name: Update mysql root password
+#  mysql_user:
+#    name: root
+#    password: '{{ mysql_root_password }}'
+#    priv: "*.*:ALL,GRANT"
+#  become: true
 
-- name: Removes all anonymous user accounts
+- name: Removes anonymous user accounts
   mysql_user:
     name: ''
     host_all: yes
     state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
+    check_implicit_admin: true
+    login_unix_socket: "{{ unix_socket }}"
+  become: true
 
 - name: Removes the MySQL test database
   mysql_db:
     name: test
     state: absent
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
+    check_implicit_admin: true
+    login_unix_socket: "{{ unix_socket }}"
+  become: true
 
 - name: Create mysql database
-  mysql_db: name={{ wp_mysql_db }} state=present
+  mysql_db:
+    name: "{{ wp_mysql_db }}"
+    state: present
+    check_implicit_admin: true
+    login_unix_socket: "{{ unix_socket }}"
   become: yes
 
 - name: Create mysql user
-  mysql_user: 
-    name={{ wp_mysql_user }} 
-    password={{ wp_mysql_password }} 
-    priv=*.*:ALL
-
-  become: yes  
+  mysql_user:
+    name: "{{ wp_mysql_user }}"
+    password: "{{ wp_mysql_password }}"
+    priv: "{{ wp_mysql_db }}.*:ALL"
+    check_implicit_admin: true
+    login_unix_socket: "{{ unix_socket }}"
+  become: yes
