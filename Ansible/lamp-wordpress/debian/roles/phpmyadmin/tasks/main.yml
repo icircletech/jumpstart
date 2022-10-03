@@ -1,0 +1,66 @@
+---
+- name: PHPMyAdmin - debconf - dbconfig -> set to  true
+  debconf:
+    name: "phpmyadmin"
+    question: "phpmyadmin/dbconfig-install"
+    value: "true"
+    vtype: "boolean"
+
+- name: PHPMyAdmin - debconf - app password -> set password
+  debconf:
+    name: "phpmyadmin"
+    question: "phpmyadmin/app-password-confirm"
+    value: "{{ phpmyadmin_mysql_password }}"
+    vtype: "password"
+  no_log: "True"
+
+- name: PHPMyAdmin - debconf - mysql admin -> set password
+  debconf:
+    name: "phpmyadmin"
+    question: "phpmyadmin/mysql/admin-pass"
+    value: "{{ phpmyadmin_mysql_password }}"
+    vtype: "password"
+  no_log: "True"
+
+- name: PHPMyAdmin - debconf - mysql app admin -> password
+  debconf:
+    name: "phpmyadmin"
+    question: "phpmyadmin/mysql/app-pass"
+    value: "{{ phpmyadmin_mysql_password }}"
+    vtype: "password"
+  no_log: True
+
+- name: PHPMyAdmin - debconf - reconfigure webserver
+  debconf:
+    name: "phpmyadmin"
+    question: "phpmyadmin/reconfigure-webserver"
+    value: "apache2"
+    vtype: "multiselect"
+
+- name: Specifying package you can register/return the list of questions and current values
+  debconf:
+    name: "phpmyadmin"
+    question: "phpmyadmin/dbconfig-install"
+    value: "true"
+    vtype: "boolean"
+
+- name: Define phpmyadmin_config_file.
+  set_fact:
+    phpmyadmin_config_file: "/etc/phpmyadmin/config.inc.php"
+  when: "phpmyadmin_config_file is not defined"
+
+- name: Ensure phpMyAdmin is installed.
+  apt:
+    name: "phpmyadmin"
+    state: "present"
+  notify: "restart apache"
+
+- name: Ensure phpMyAdmin config file is included in Apache config.
+  lineinfile:
+    dest: "/etc/apache2/apache2.conf"
+    state: "present"
+    regexp: "^Include.+phpmyadmin.+$"
+    line: "Include /etc/phpmyadmin/apache.conf"
+    insertafter: "EOF"
+    mode: 0644
+  notify: "restart apache"
