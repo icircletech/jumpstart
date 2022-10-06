@@ -15,32 +15,44 @@
     owner: "{{ app_user }}"
     mode: '0755'
 
+- name: Create log directory
+  file:
+    path: "/var/www/html/{{ http_host }}/logs"
+    state: directory
+    owner: "{{ app_user }}"
+    mode: '0755'
+
 - name: Set up Apache virtualhost
   template:
     src: "files/apache.conf.j2"
     dest: "/etc/apache2/sites-available/{{ http_conf }}"
     
 - name: Enable new site
-  shell: /usr/sbin/a2ensite {{ http_conf }}
+  shell: "/usr/sbin/a2ensite {{ http_conf }}"
   
 - name: Disable default Apache site
-  shell: /usr/sbin/a2dissite 000-default.conf
-  when: disable_default
-  notify: Reload Apache
+  shell: "/usr/sbin/a2dissite 000-default.conf"
+  when: "disable_default"
+  notify: "Reload Apache"
 
 # UFW Configuration
 - name: "UFW - Allow HTTP on port {{ http_port }}"
   ufw:
-    rule: allow
+    rule: "allow"
     port: "{{ http_port }}"
-    proto: tcp
+    proto: "tcp"
+
+- name: Enable the Apache2 module rewrite
+  apache2_module:
+    state: "present"
+    name: "rewrite"
 
 - name: Reload Apache
   service:
-    name: apache2
-    state: reloaded
+    name: "apache2"
+    state: "reloaded"
 
 - name: Restart Apache
   service:
-    name: apache2
-    state: restarted
+    name: "apache2"
+    state: "restarted"

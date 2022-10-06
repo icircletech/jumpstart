@@ -17,14 +17,14 @@
     regexp:
       "(.)+DocumentRoot /var/www/html"
     line:
-      "DocumentRoot /var/www/{{ http_host }}"
+      "DocumentRoot /var/www/html/{{ http_host }}/public_html"
 
   notify:
     - restart apache
 
 - name: Create a directory if it does not exist
-  ansible.builtin.file:
-    path: "/var/www/{{ http_host }}"
+  file:
+    path: "/var/www/html/{{ http_host }}/public_html"
     state: directory
     mode: '0755'
 
@@ -36,7 +36,7 @@
 # Synchronize two directories on one remote host.
 - synchronize:
     src: /var/www/wordpress/
-    dest: /var/www/{{ http_host }}
+    dest: /var/www/html/{{ http_host }}/public_html
   delegate_to: "{{ inventory_hostname }}"
 
 - name: Recursively remove directory
@@ -45,13 +45,13 @@
     state: absent
 
 - name: Copy sample config file
-  command: "cp /var/www/{{ http_host }}/wp-config-sample.php /var/www/{{ http_host }}/wp-config.php creates=/var/www/{{ http_host }}/wp-config.php"
+  command: "cp /var/www/html/{{ http_host }}/public_html/wp-config-sample.php /var/www/html/{{ http_host }}/public_html/wp-config.php creates=/var/www/{{ http_host }}/wp-config.php"
   become: yes
 
 - name: Update WordPress config file
   lineinfile:
     dest:
-      "/var/www/{{ http_host }}/wp-config.php"
+      "/var/www/html/{{ http_host }}/public_html/wp-config.php"
     regexp:
       "{{ item.regexp }}"
     line:
@@ -61,3 +61,11 @@
     - {'regexp': "define\\( 'DB_USER', '(.)+' \\);", 'line': "define( 'DB_USER', '{{wp_mysql_user}}' );"}
     - {'regexp': "define\\( 'DB_PASSWORD', '(.)+' \\);", 'line': "define( 'DB_PASSWORD', '{{wp_mysql_password}}' );"}
   become: yes
+
+  - name: Recursively change ownership of a directory
+  file:
+    path: "/var/www/html/{{ http_host }}/public_html"
+    state: "directory"
+    recurse: yes
+    owner: "www-data"
+    group: "www-data"
