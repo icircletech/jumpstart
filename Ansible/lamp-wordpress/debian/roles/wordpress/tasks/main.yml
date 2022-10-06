@@ -44,23 +44,29 @@
     path: "/var/www/wordpress"
     state: absent
 
-- name: Copy sample config file
-  command: "cp /var/www/html/{{ http_host }}/public_html/wp-config-sample.php /var/www/html/{{ http_host }}/public_html/wp-config.php creates=/var/www/{{ http_host }}/wp-config.php"
-  become: yes
+# - name: Copy sample config file
+#   command: "cp /var/www/html/{{ http_host }}/public_html/wp-config-sample.php /var/www/html/{{ http_host }}/public_html/wp-config.php creates=/var/www/{{ http_host }}/wp-config.php"
+#   become: yes
 
-- name: Update WordPress config file
-  lineinfile:
-    dest:
-      "/var/www/html/{{ http_host }}/public_html/wp-config.php"
-    regexp:
-      "{{ item.regexp }}"
-    line:
-      "{{ item.line }}"
-  with_items:
-    - {'regexp': "define\\( 'DB_NAME', '(.)+' \\);", 'line': "define( 'DB_NAME', '{{wp_mysql_db}}' );"}
-    - {'regexp': "define\\( 'DB_USER', '(.)+' \\);", 'line': "define( 'DB_USER', '{{wp_mysql_user}}' );"}
-    - {'regexp': "define\\( 'DB_PASSWORD', '(.)+' \\);", 'line': "define( 'DB_PASSWORD', '{{wp_mysql_password}}' );"}
-  become: yes
+- name: Set up Wordpress wp-config.php
+  template:
+    src: "files/wp-config.php.j2"
+    dest: "/var/www/html/{{ http_host }}/public_html/wp-config.php"
+    
+
+# - name: Update WordPress config file
+#   lineinfile:
+#     dest:
+#       "/var/www/html/{{ http_host }}/public_html/wp-config.php"
+#     regexp:
+#       "{{ item.regexp }}"
+#     line:
+#       "{{ item.line }}"
+#   with_items:
+#     - {'regexp': "define\\( 'DB_NAME', '(.)+' \\);", 'line': "define( 'DB_NAME', '{{wp_mysql_db}}' );"}
+#     - {'regexp': "define\\( 'DB_USER', '(.)+' \\);", 'line': "define( 'DB_USER', '{{wp_mysql_user}}' );"}
+#     - {'regexp': "define\\( 'DB_PASSWORD', '(.)+' \\);", 'line': "define( 'DB_PASSWORD', '{{wp_mysql_password}}' );"}
+#   become: yes
 
   - name: Recursively change ownership of a directory
   file:
